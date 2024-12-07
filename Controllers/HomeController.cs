@@ -1,31 +1,40 @@
-using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
-using CoffeeChart.Models;
+using CoffeeChart.Data;
+using Newtonsoft.Json;
 
-namespace CoffeeChart.Controllers;
-
-public class HomeController : Controller
+namespace CoffeeChart.Controllers
 {
-    private readonly ILogger<HomeController> _logger;
-
-    public HomeController(ILogger<HomeController> logger)
+    public class HomeController : Controller
     {
-        _logger = logger;
-    }
+        private readonly DatabaseContext _context;
 
-    public IActionResult Index()
-    {
-        return View();
-    }
+        public HomeController(DatabaseContext context)
+        {
+            _context = context;
+        }
 
-    public IActionResult Privacy()
-    {
-        return View();
-    }
 
-    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-    public IActionResult Error()
-    {
-        return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        [HttpGet]
+        public IActionResult GetChartData()
+        {
+            var data = _context.CoffeeConsumption
+                .Select(c => new { c.Year, c.Consumption })
+                .OrderBy(c => c.Year)
+                .ToList();
+
+            return Json(data);
+        }
+
+
+        public IActionResult Index()
+        {
+            var data = _context.CoffeeConsumption
+                .Select(c => new { c.Year, c.Consumption })
+                .OrderBy(c => c.Year)
+                .ToList();
+
+            ViewBag.ChartData = JsonConvert.SerializeObject(data);
+            return View();
+        }
     }
 }
